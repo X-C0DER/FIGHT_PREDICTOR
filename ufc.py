@@ -22,7 +22,10 @@ def calculate_age(birthdate):
 driver = webdriver.Chrome()
 
 driver.get("http://www.ufcstats.com/fighter-details/f1fac969a1d70b08") 
-sleep(5)
+
+fighter_data = {}
+
+
 title_element = driver.find_element(By.CSS_SELECTOR, ".b-content__title-highlight")
 record_element = driver.find_element(By.CSS_SELECTOR, ".b-content__title-record")
 nickname_element = driver.find_element(By.CSS_SELECTOR, ".b-content__Nickname")
@@ -37,15 +40,36 @@ print("Fighter Name:", fighter_name)
 print("Fight Record:", fight_record)
 print("Nickname:", nickname)
 
+fighter_data['Fighter Name']=fighter_name
+fighter_data['Fighter Nickname']=nickname
+fighter_data['Fighter Record']=fight_record
 
-left_info_box = driver.find_element(By.CLASS_NAME, "b-list__info-box-left")
+target_elements = driver.find_elements(By.CSS_SELECTOR, 'li.b-list__box-list-item.b-list__box-list-item_type_block')
 
-career_statistics_index = left_info_text.find("Career statistics:")
-career_statistics_text = left_info_text[career_statistics_index:]
 
-# Print the extracted information
-print("Left Info:")
-print(career_statistics_text)
+for element in target_elements:
+    key_element = element.find_element(By.CSS_SELECTOR, 'i.b-list__box-item-title')
+    key = key_element.text.strip()
+    value = element.text.replace(key, '').strip()
+
+    # Avoid repeated or empty keys
+    if key and key not in fighter_data:
+        # Remove the colon from the key and format the data
+        formatted_key = key.rstrip(':')
+        
+        # Fix representation for height and enclose all values in double quotes
+        if formatted_key == 'HEIGHT':
+            value = f"{value.replace("'", '').replace('"', '')}"
+        else:
+            value = f"{value}"
+        
+        fighter_data[formatted_key] = value
+ 
+fighter_data['AGE']=calculate_age(fighter_data['DOB'])
 
 
 driver.quit()
+
+
+
+print(fighter_data)
