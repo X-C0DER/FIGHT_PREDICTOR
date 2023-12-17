@@ -16,7 +16,7 @@ class UFC:
     __json_filename=""
     __data_links=[]
 
-    def __init__(self, url,json_filename=None):
+    def __init__(self, url="",json_filename=None):
         self.__url = url
         self.__json_filename=json_filename
         self.driver = webdriver.Chrome()
@@ -151,3 +151,10 @@ class UFC:
         self.driver.quit()
 
 
+tony=UFC("http://ufcstats.com/fighter-details/7826923b47f8d72a")
+tony.get_fighter_detail()
+tony.get_figter_h2h()
+
+tony.get_fight_details()
+
+tony.quit_driver()
