@@ -227,10 +227,21 @@ class UFC_EVENT:
         title=self.driver.find_element(By.CLASS_NAME,"b-content__title-highlight")
         return (title.text)
     
-# event=UFC_EVENT(url="http://ufcstats.com/event-details/010986ee359fb863")
 
-# fighters=event.get_opponent_links()
-# event_name=event.get_event_name()
+    
+    
+event=UFC_EVENT(url="http://ufcstats.com/event-details/a9df5ae20a97b090")
+
+fighters=event.get_fighters_links()
+print (len(fighters))
+event_name=event.get_event_name()
+print (event_name)
+
+for f in fighters:
+    data=UFC_Fighter(f,folder_name=event_name)
+    data.get_fighter_detail()
+    data.get_figter_h2h()
+
 
 
 # data=UFC_Fighter(fighters[0],folder_name=name)
@@ -241,17 +252,20 @@ class UFC_EVENT:
 # data.get_fighter_detail()
 # data.get_figter_h2h()
 
-def process_fighter(fighter_url,event_name):
-    fighter_data = UFC_Fighter(fighter_url,folder_name=event_name)
-    fighter_data.get_fighter_detail()
-    fighter_data.get_figter_h2h()
-    fighter_data.quit_driver()
+# def process_fighter(fighter_url):
+#     fighter_data = UFC_Fighter(fighter_url,folder_name="UFC 299")
+#     fighter_data.get_fighter_detail()
+#     fighter_data.get_figter_h2h()
+#     fighter_data.quit_driver()
 
-def main():
-    event = UFC_EVENT(url="http://ufcstats.com/event-details/a9df5ae20a97b090")
-    fighters = event.get_fighters_links()
-    event_name=event.get_event_name()
+# def main():
+#     event = UFC_EVENT(url="http://ufcstats.com/event-details/a9df5ae20a97b090")
+#     fighters = event.get_fighters_links()
+#     event_name=event.get_event_name()
+#     print (len(fighters))
+#     fighter_args = [(fighter, event_name) for fighter in fighters]
+#     with ProcessPoolExecutor() as executor:
+#         executor.map(process_fighter,fighters)
 
-    fighter_args = [(fighter, event_name) for fighter in fighters]
-    with ProcessPoolExecutor() as executor:
-        executor.map(process_fighter,fighters,event_name)
+# if __name__ == "__main__":
+#     main()
