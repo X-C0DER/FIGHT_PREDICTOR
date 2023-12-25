@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import *
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -6,27 +6,30 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
 from datetime import datetime
+from random import randrange
 import json
 import os
 
 
 
-class UFC:
+class UFC_Fighter:
     __url = None
     fighter_data = {}
     opp_data=[]
+    folder_name=""
     fighter_name = ""
     __json_filename=""
     __data_links=[]
-    data_list=[]
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
 
-    def __init__(self, url="",json_filename=""):
+    def __init__(self, url="",json_filename="",folder_name=str(randrange(1000,100000))):
         self.__url = url
         self.__json_filename=json_filename
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        self.driver = webdriver.Chrome()
+        self.folder_name=folder_name.replace(':', '_').replace(' ', '_')
 
+        self.driver = webdriver.Chrome(self.chrome_options)
+        os.makedirs(self.folder_name,exist_ok=True)
     
     def set_url(self,url):
         self.__url=url
@@ -39,7 +42,8 @@ class UFC:
 
     def get_fighter_detail(self):
         self.driver.get(self.__url)
-
+        fighter_detail={}
+        
         title_element = self.driver.find_element(By.CSS_SELECTOR, ".b-content__title-highlight")
         record_element = self.driver.find_element(By.CSS_SELECTOR, ".b-content__title-record")
         nickname_element = self.driver.find_element(By.CSS_SELECTOR, ".b-content__Nickname")
@@ -75,26 +79,21 @@ class UFC:
                 if 'DOB' in self.fighter_data:
                     self.fighter_data['AGE'] = self.calculate_age(self.fighter_data['DOB'])
 
+            fighter_detail["Fighter_Detail"]=self.fighter_data
 
             if not self.__json_filename:
                 
                 self.__json_filename = f"{self.fighter_name}_data.json"
-                with open(self.__json_filename, 'w') as json_file:
-                    json.dump(self.fighter_data, json_file, indent=4)
+                with open(f"{self.folder_name}/{self.__json_filename}", 'w') as json_file:
+                    json.dump(fighter_detail, json_file, indent=4)
 
             else:
-                with open(self.__json_filename, 'w') as json_file:
-                    json.dump(self.fighter_data, json_file, indent=4)
-
-        opponent_links = self.get_opponent_links()
-        for l in opponent_links:
-            print (l)
-            self.get_opp_detail(l)
+                with open(f"{self.folder_name}/{self.__json_filename}", 'w') as json_file:
+                    json.dump(fighter_detail, json_file, indent=4)
 
 
     def get_figter_h2h(self):
         self.driver.get(self.__url)
-        print (self.opp_data)
         header_locator = (By.CLASS_NAME, 'b-fight-details__table-head')
         header = self.driver.find_element(*header_locator)
 
@@ -103,32 +102,36 @@ class UFC:
         rows_locator = (By.CLASS_NAME, 'b-fight-details__table-row')
         rows = self.driver.find_elements(*rows_locator)
 
-        
-        for opp in self.opp_data:   
-            for row in rows:
-                row_data = {}
-                columns = row.find_elements(By.CLASS_NAME, 'b-fight-details__table-col')
+        data_list = []
 
-                for i, column in enumerate(columns):
-                    column_data = column.find_elements(By.CLASS_NAME, 'b-fight-details__table-text')
+        for row in rows:
+            next_flag = row.find_elements(By.CLASS_NAME, 'b-flag__text')
+            if next_flag and "next" in next_flag[0].text.lower():
+             continue
 
-                    if column_data:
-                        row_data[header_columns[i]] = [item.text for item in column_data]
+            row_data = {}
+            columns = row.find_elements(By.CLASS_NAME, 'b-fight-details__table-col')
 
-                self.data_list.append(row_data)
+            for i, column in enumerate(columns):
+                column_data = column.find_elements(By.CLASS_NAME, 'b-fight-details__table-text')
+                
+                if column_data:
+                    row_data[header_columns[i]] = [item.text for item in column_data if not "Matchup Preview" in column_data]
 
-            if not self.__json_filename:
-                self.__json_filename = f"{self.fighter_name}_data.json"
+            data_list.append(row_data)
 
-            if os.path.exists(self.__json_filename):
-                # If the file exists, load existing data and append the new data
-                with open(self.__json_filename, 'r') as json_file:
-                    existing_data = json.load(json_file)
-                    existing_data["H2H"] = self.data_list
-                    self.data_list = existing_data
+        if not f"{self.folder_name}/{self.__json_filename}":
+            self.__json_filename = f"{self.folder_name}/{self.__json_filename}_data.json"
 
-            with open(self.__json_filename, 'w') as json_file:
-                json.dump(self.data_list, json_file, indent=4)
+        if os.path.exists(f"{self.folder_name}/{self.__json_filename}"):
+            # If the file exists, load existing data and append the new data
+            with open(f"{self.folder_name}/{self.__json_filename}", 'r') as json_file:
+                existing_data = json.load(json_file)
+                existing_data["H2H"] = data_list
+                data_list = existing_data
+
+        with open(f"{self.folder_name}/{self.__json_filename}",'w') as json_file:
+            json.dump(data_list, json_file, indent=4)
 
 
 
@@ -148,22 +151,6 @@ class UFC:
         self.get_data_link()
         print(self.__data_links)      
 
-    def get_opponent_links(self):
-        self.driver.get(self.__url)
-
-        opponent_links = []
-
-        # Assuming opponent links are in p elements with the class 'b-fight-details__table-text'
-        opponent_elements = self.driver.find_elements(By.CSS_SELECTOR, 'td.b-fight-details__table-col.l-page_align_left p.b-fight-details__table-text a.b-link_style_black')
-
-        for opponent_element in opponent_elements:
-            opponent_link = opponent_element.get_attribute('href')
-
-            # Exclude the link matching the fighter's own link and links containing "event-details"
-            if self.__url not in opponent_link and "event-details" not in opponent_link:
-                opponent_links.append(opponent_link)
-
-        return opponent_links
     
     def get_opp_detail(self,link):
         self.driver.get(link)
@@ -206,7 +193,65 @@ class UFC:
     def quit_driver(self):
         self.driver.quit()
 
+class UFC_EVENT:
+    __url = "" 
 
-tony=UFC("http://ufcstats.com/fighter-details/7026eca45f65377")
-tony.get_fighter_detail()
-tony.get_figter_h2h()
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    opp_data = []
+
+    def __init__(self, url):
+        self.__url = url  # Use self.__url to refer to the class attribute
+        self.driver = webdriver.Chrome(self.chrome_options)
+
+    def get_event_name(self):
+        title=self.driver.find_element(By.CLASS_NAME,"b-content__title-highlight")
+        return (title.text)
+
+    def get_fighters_links(self):
+        self.driver.get(self.__url)
+
+        # Assuming opponent links are in p elements with the class 'b-fight-details__table-text'
+        opponent_elements = self.driver.find_elements(By.CSS_SELECTOR, 'td.b-fight-details__table-col.l-page_align_left p.b-fight-details__table-text a.b-link_style_black')
+
+        for opponent_element in opponent_elements:
+            opponent_link = opponent_element.get_attribute('href')
+
+            # Exclude the link matching the fighter's own link and links containing "event-details"
+            if self.__url not in opponent_link and "event-details" not in opponent_link:
+                self.opp_data.append(opponent_link)
+
+        return self.opp_data
+    
+    def get_event_name(self):
+        title=self.driver.find_element(By.CLASS_NAME,"b-content__title-highlight")
+        return (title.text)
+    
+# event=UFC_EVENT(url="http://ufcstats.com/event-details/010986ee359fb863")
+
+# fighters=event.get_opponent_links()
+# event_name=event.get_event_name()
+
+
+# data=UFC_Fighter(fighters[0],folder_name=name)
+# data.get_fighter_detail()
+# data.get_figter_h2h()
+
+# data=UFC_Fighter("http://ufcstats.com/fighter-details/d802174b0c0c1f4e","k.json")
+# data.get_fighter_detail()
+# data.get_figter_h2h()
+
+def process_fighter(fighter_url,event_name):
+    fighter_data = UFC_Fighter(fighter_url,folder_name=event_name)
+    fighter_data.get_fighter_detail()
+    fighter_data.get_figter_h2h()
+    fighter_data.quit_driver()
+
+def main():
+    event = UFC_EVENT(url="http://ufcstats.com/event-details/a9df5ae20a97b090")
+    fighters = event.get_fighters_links()
+    event_name=event.get_event_name()
+
+    fighter_args = [(fighter, event_name) for fighter in fighters]
+    with ProcessPoolExecutor() as executor:
+        executor.map(process_fighter,fighters,event_name)
