@@ -243,24 +243,23 @@ class UFC_EVENT:
     
 
 
-'''   
 event=UFC_EVENT(url="http://ufcstats.com/event-details/a9df5ae20a97b090")
 
 fighters=event.get_fighters_links()
 print (len(fighters))
 event_name=event.get_event_name()
-print (event_name)
 
 for f in fighters:
     data=UFC_Fighter(f,folder_name=event_name)
     data.get_fighter_detail()
     data.get_figter_h2h()
-'''
 
 
-data=UFC_Fighter("http://ufcstats.com/fighter-details/b1b0729d27936f2f",folder_name="UFC_299__O'Malley_vs._Vera_2")
-data.get_fighter_detail()
-data.get_figter_h2h()
+
+
+# data=UFC_Fighter("http://ufcstats.com/fighter-details/b1b0729d27936f2f",folder_name="UFC_299__O'Malley_vs._Vera_2")
+# data.get_fighter_detail()
+# data.get_figter_h2h()
 
 # data=UFC_Fighter("http://ufcstats.com/fighter-details/d802174b0c0c1f4e","k.json")
 # data.get_fighter_detail()
