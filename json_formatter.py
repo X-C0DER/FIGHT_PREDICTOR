@@ -3,11 +3,11 @@ import json
 
 def load_data(fighter1, fighter2):
     # Load data from "fighter1_data.json"
-    filename1 = f"{fighter1}_data.json"
+    filename1 = f"UFC_299__O'Malley_vs._Vera_2/{fighter1}_data.json"
     with open(filename1) as f1:
         data1 = json.load(f1)
 
-    filename2 = f"{fighter2}_data.json"
+    filename2 = f"UFC_299__O'Malley_vs._Vera_2/{fighter2}_data.json"
     with open(filename2) as f2:
         data2 = json.load(f2)
 
@@ -17,14 +17,12 @@ def load_data(fighter1, fighter2):
         
         data2['H2H'] = [item for item in data2['H2H'] if item]
 
-        detail=data1['Fighter_Detail']
-        detail2=data2['Fighter_Detail']
 
-        df1 = {"Fighter_Detail":detail,fighter1+'_H2H': serialize_data(data1)}
-        df2 = {"Fighter_Detail_2":detail2,fighter2+'_H2H': serialize_data(data2)}
+        df1 = {fighter1+'_H2H': serialize_data(data1)}
+        df2 = {fighter2+'_H2H': serialize_data(data2)}
 
         # Save the combined data to a JSON file
-        output_filename = f"{fighter1}_vs_{fighter2}.json"
+        output_filename = f"{fighter1}_vs_{fighter2}_H2h.json"
         with open(output_filename, 'w') as outfile:
             json.dump({**df1, **df2}, outfile, indent=4)
 
@@ -37,6 +35,7 @@ def serialize_data(data):
 
     # Extract the second entry in the 'FIGHTER' and 'EVENT' sections
     df['FIGHTER_1_RESULT'] = df['W/L'].apply(lambda x: x[0])
+    df['KD_TOTAL']=df['KD'].apply(lambda x: int(x[0])+int(x[1]))
     df['FIGHTER_1'] = df['FIGHTER'].apply(lambda x: x[0])
     df['FIGHTER_2'] = df['FIGHTER'].apply(lambda x: x[1])
 
@@ -56,14 +55,14 @@ def serialize_data(data):
         df[f'{feature}_FIGHTER_1'] = df.apply(lambda row: row[feature][0] if isinstance(row[feature], list) and len(row[feature]) > 0 else None, axis=1)
         df[f'{feature}_FIGHTER_2'] = df.apply(lambda row: row[feature][1] if isinstance(row[feature], list) and len(row[feature]) > 1 else None, axis=1)
 
-    df2 = df[['FIGHTER_1_RESULT', 'FIGHTER_1', 'FIGHTER_2', 'EVENT_NAME', 'EVENT_DATE', 'KD_FIGHTER_1', 'KD_FIGHTER_2', 'STR_FIGHTER_1', 'STR_FIGHTER_2', 'TD_FIGHTER_1', 'TD_FIGHTER_2', 'SUB_FIGHTER_1', 'SUB_FIGHTER_2', 'WIN_METHOD', 'ROUND', 'TIME']].astype(str)
+    df2 = df[['FIGHTER_1_RESULT', 'KD_TOTAL','FIGHTER_1', 'FIGHTER_2', 'EVENT_NAME', 'EVENT_DATE', 'KD_FIGHTER_1', 'KD_FIGHTER_2', 'STR_FIGHTER_1', 'STR_FIGHTER_2', 'TD_FIGHTER_1', 'TD_FIGHTER_2', 'SUB_FIGHTER_1', 'SUB_FIGHTER_2', 'WIN_METHOD', 'ROUND', 'TIME']].astype(str)
 
     df_dict = df2.to_dict(orient='records')
 
     return df_dict
 
 # Get fighter names as input
-fighter1 = "Ketlen Vieira"
-fighter2 = "Johnny Walker"
+fighter1 = "Petr Yan"
+fighter2 = "Kyler Phillips"
 
 load_data(fighter1, fighter2)

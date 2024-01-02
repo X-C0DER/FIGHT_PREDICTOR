@@ -151,7 +151,20 @@ class UFC_Fighter:
         self.get_data_link()
         print(self.__data_links)      
 
-    
+        def get_fighters_links(self):
+            self.driver.get(self.__url)
+            opp_link=[]
+            # Assuming opponent links are in p elements with the class 'b-fight-details__table-text'
+            opponent_elements = self.driver.find_elements(By.CSS_SELECTOR, 'td.b-fight-details__table-col.l-page_align_left p.b-fight-details__table-text a.b-link_style_black')
+
+            for opponent_element in opponent_elements:
+                opponent_link = opponent_element.get_attribute('href')
+
+                # Exclude the link matching the fighter's own link and links containing "event-details"
+                if self.__url not in opponent_link and "event-details" not in opponent_link:
+                    opp_link.append(opponent_link)
+
+            return opp_link
     def get_opp_detail(self,link):
         self.driver.get(link)
         opp_detail={}
@@ -193,6 +206,7 @@ class UFC_Fighter:
     def quit_driver(self):
         self.driver.quit()
 
+
 class UFC_EVENT:
     __url = "" 
 
@@ -228,8 +242,8 @@ class UFC_EVENT:
         return (title.text)
     
 
-    
-    
+
+'''   
 event=UFC_EVENT(url="http://ufcstats.com/event-details/a9df5ae20a97b090")
 
 fighters=event.get_fighters_links()
@@ -241,12 +255,12 @@ for f in fighters:
     data=UFC_Fighter(f,folder_name=event_name)
     data.get_fighter_detail()
     data.get_figter_h2h()
+'''
 
 
-
-# data=UFC_Fighter(fighters[0],folder_name=name)
-# data.get_fighter_detail()
-# data.get_figter_h2h()
+data=UFC_Fighter("http://ufcstats.com/fighter-details/b1b0729d27936f2f",folder_name="UFC_299__O'Malley_vs._Vera_2")
+data.get_fighter_detail()
+data.get_figter_h2h()
 
 # data=UFC_Fighter("http://ufcstats.com/fighter-details/d802174b0c0c1f4e","k.json")
 # data.get_fighter_detail()
